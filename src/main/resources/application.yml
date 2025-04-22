@@ -1,16 +1,25 @@
 server:
   port: 9091
+
 spring:
   cloud:
     gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
       routes:
-        - id: DEMO SERVICE
-          uri: ${DEMO_SERVICE:http://localhost:8089}
+        - id: demo-service
+          uri: lb://student-service
           predicates:
             - Path=/**
           filters:
             - PrefixPath=/api/v1
             - AddResponseHeader=X-Powered-By, Damba Gateway Service
+            - name: CircuitBreaker
+              args:
+                name: studentCircuitBreaker
+                fallbackUri: forward:/fallback/default
   application:
     name: api-gateway
 
@@ -27,3 +36,24 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      studentCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 5
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        eventConsumerBufferSize: 10
+
+problem:
+  stack-traces: never
+  details: always
+  advice:
+    enabled: true
+  exceptions:
+    enabled: true
