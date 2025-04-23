@@ -1,5 +1,5 @@
 server:
-  port: 9091
+  port: 7503
 
 spring:
   cloud:
@@ -9,13 +9,24 @@ spring:
           enabled: true
           lower-case-service-id: true
       routes:
-        - id: demo-service
-          uri: lb://student-service
+        - id: Finance Service
+          uri: lb://finance-service
           predicates:
-            - Path=/**
+            - Path=/finance/**
           filters:
-            - PrefixPath=/api/v1
-            - AddResponseHeader=X-Powered-By, Damba Gateway Service
+            - PrefixPath=/ecl-calculator/api/v1
+            - AddResponseHeader=X-Powered-By, X-PLUG Gateway Service
+            - name: CircuitBreaker
+              args:
+                name: studentCircuitBreaker
+                fallbackUri: forward:/fallback/default
+        - id: Credit Service
+          uri: lb://credit-service
+          predicates:
+            - Path=/credit/**
+          filters:
+            - PrefixPath=/ecl-calculator/api/v1
+            - AddResponseHeader=X-Powered-By, X-PLUG Gateway Service
             - name: CircuitBreaker
               args:
                 name: studentCircuitBreaker
